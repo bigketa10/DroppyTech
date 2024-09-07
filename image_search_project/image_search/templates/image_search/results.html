@@ -1,4 +1,13 @@
 <h2>Image Uploaded Successfully!</h2>
 <img src="{{ image_path|default_if_none:'' }}" alt="Uploaded Image" width="300">
 
-<p>Processing and comparison logic can go here.</p>
+<h2>Comparison Results:</h2>
+<ul>
+    {% for result in results %}
+        <li>
+            <p>Product: {{ result.image_name }}</p>
+            <p>Hamming Distance: {{ result.hamming_distance }}</p>
+            <p>Similarity: {{ result.similarity }}%</p>
+        </li>
+    {% endfor %}
+</ul>
