@@ -60,3 +60,23 @@ def search_view(request):
         form = ImageUploadForm()
 
     return render(request, 'image_search/search.html', {'form': form})
+
+def upload_image_view(request):
+    if request.method == 'POST' and request.FILES['image']:
+        image = request.FILES['image']
+        image_name = 'temp_image.jpg'  # Always save as 'temp_image.jpg'
+        image_path = os.path.join(settings.MEDIA_ROOT, image_name)
+
+        # Save the uploaded image
+        with open(image_path, 'wb+') as destination:
+            for chunk in image.chunks():
+                destination.write(chunk)
+
+        # Pass results to the template
+        results = perform_comparison(image_path)  # Your image comparison logic
+        return render(request, 'template_name.html', {
+            'results': results,
+        })
+
+    return render(request, 'upload.html')
+
