@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'image_search',
+    'rest_framework'
 ]
 
 MEDIA_URL = '/media/'
