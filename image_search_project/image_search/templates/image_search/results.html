@@ -1,13 +1,19 @@
-<h2>Image Uploaded Successfully!</h2>
-<img src="{{ MEDIA_URL }}temp_image.jpg" alt="Uploaded Image" width="300">
+{% extends 'image_search/base.html' %}
 
-<h2>Comparison Results:</h2>
-<ul>
-    {% for result in results %}
-        <li>
-            <p>Product: {{ result.image_name }}</p>
-            <p>Hamming Distance: {{ result.hamming_distance }}</p>
-            <p>Similarity: {{ result.similarity }}%</p>
-        </li>
-    {% endfor %}
-</ul>
+{% block title %}Results{% endblock %}
+
+{% block content %}
+    <div class="container">
+    <img src="/media/temp_image.jpg" alt="Uploaded Image">
+       <h2>Comparison Results:</h2>
+        <ul>
+            {% for result in results %}
+                <li>
+                    <p>Product: {{ result.image_name }}</p>
+                    <p>Hamming Distance: {{ result.hamming_distance }}</p>
+                    <p>Similarity: {{ result.similarity }}%</p>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

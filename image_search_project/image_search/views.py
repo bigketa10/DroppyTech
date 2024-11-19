@@ -80,3 +80,17 @@ def upload_image_view(request):
 
     return render(request, 'upload.html')
 
+# views.py
+from django.conf import settings
+from django.shortcuts import render
+
+def results_view(request):
+    image_url = '/media/temp_image.jpg'  # Hardcoded for testing
+    print("Debug: Hardcoded image URL:", image_url)  # Debugging line
+    return render(request, 'image_search/results.html', {'image_url': image_url})
+
+def home_view(request):
+    return render(request, 'image_search/home.html')
+
+def search(request):
+    return render(request, 'image_search/search.html')
