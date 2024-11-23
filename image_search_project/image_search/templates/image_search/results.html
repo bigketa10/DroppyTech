@@ -1,19 +1,30 @@
 {% extends 'image_search/base.html' %}
 
-{% block title %}Results{% endblock %}
+{% block title %}Search Results{% endblock %}
 
 {% block content %}
-    <div class="container">
-    <img src="/media/temp_image.jpg" alt="Uploaded Image">
-       <h2>Comparison Results:</h2>
-        <ul>
+    <div class="container mt-5">
+        <h2>Nearest Neighbor Results</h2>
+        <div class="row">
             {% for result in results %}
-                <li>
-                    <p>Product: {{ result.image_name }}</p>
-                    <p>Hamming Distance: {{ result.hamming_distance }}</p>
-                    <p>Similarity: {{ result.similarity }}%</p>
-                </li>
+                <div class="col-md-4">
+                    <div class="card mb-4 shadow-sm">
+                        <img src="{{ result.productURL }}" class="card-img-top" alt="Product Image">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ result.title }}</h5>
+                            <p class="card-text">
+                                <strong>Product Name:</strong> {{ result.title }}<br>
+                                <strong>URL:</strong> {{ result.productURL }}<br>
+                                <strong>Category:</strong> {{ result.categoryName }}<br>
+                                <strong>Stars:</strong> {{ result.stars }}<br>
+                                <strong>Reviews:</strong> {{ result.reviews }}<br>
+                                <strong>Bestseller:</strong> {{ result.isBestSeller }}<br>
+                                <strong>Distance:</strong> {{ result.distance }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     </div>
 {% endblock %}

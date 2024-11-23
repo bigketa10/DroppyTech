@@ -3,16 +3,31 @@
 {% block title %}Search{% endblock %}
 
 {% block content %}
-    <div class="container">
-        <h2>Upload an Image</h2>
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Upload Image</button>
-        </form>
-
-        {% if error %}
-            <p style="color: red;">{{ error }}</p>
-        {% endif %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title text-center">Upload an Image</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ form.as_p }}
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Upload Image</button>
+                            </div>
+                        </form>
+                        {% if error %}
+                            <div class="alert alert-danger mt-3" role="alert">
+                                {{ error }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
