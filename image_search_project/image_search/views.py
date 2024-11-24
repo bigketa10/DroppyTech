@@ -62,11 +62,11 @@ def nearest_neighbours(query_image_path):
     model.fc = nn.Identity()
     model.eval()
 
-    # Transformation pipeline
+    # Transformation pipeline with explicit normalization
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=weights.transforms.mean, std=weights.transforms.std),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Fixed normalization
     ])
     
     try:
@@ -102,6 +102,7 @@ def nearest_neighbours(query_image_path):
         print(f"Error in nearest_neighbours: {e}")
         return None
 
+
 def search_view(request):
     if request.method == 'POST':
         form = ImageUploadForm(request.POST, request.FILES)
@@ -119,33 +120,13 @@ def search_view(request):
 
             # Return results as JSON for debugging (can be adapted for rendering)
             if nearest_neighbors_results:
-                return JsonResponse({'results': nearest_neighbors_results})
+                return render(request, 'image_search/results.html', {'form': form})
             else:
                 return JsonResponse({'error': 'Error processing image or finding results'}, status=500)
 
     else:
         form = ImageUploadForm()
 
-    return render(request, 'image_search/search.html', {'form': form})
-
-def upload_image_view(request):
-    if request.method == 'POST' and request.FILES['image']:
-        image = request.FILES['image']
-        image_name = 'temp_image.jpg'  # Always save as 'temp_image.jpg'
-        image_path = os.path.join(settings.MEDIA_ROOT, image_name)
-
-        # Save the uploaded image
-        with open(image_path, 'wb+') as destination:
-            for chunk in image.chunks():
-                destination.write(chunk)
-
-        # Pass results to the template
-        results = perform_comparison(image_path)  # Your image comparison logic
-        return render(request, 'template_name.html', {
-            'results': results,
-        })
-
-    return render(request, 'upload.html')
 
 # views.py
 from django.conf import settings
@@ -153,7 +134,6 @@ from django.shortcuts import render
 
 def results_view(request):
     image_url = '/media/temp_image.jpg'  # Hardcoded for testing
-    print("Debug: Hardcoded image URL:", image_url)  # Debugging line
     return render(request, 'image_search/results.html', {'image_url': image_url})
 
 def home_view(request):
