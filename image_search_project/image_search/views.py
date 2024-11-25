@@ -52,7 +52,7 @@ def nearest_neighbours(query_image_path):
     annoy_index.load(annoy_index_path)
 
     # Load metadata mapping
-    metadata_path = os.path.join(settings.MEDIA_ROOT, 'id_to_metadata.json')
+    metadata_path = os.path.join(settings.MEDIA_ROOT, 'id_to_metadata (2).json')
     with open(metadata_path, 'r') as f:
         id_to_metadata = json.load(f)
 
@@ -78,7 +78,7 @@ def nearest_neighbours(query_image_path):
         query_embedding = model(input_tensor).squeeze(0).detach().numpy()
 
         # Find the top 5 nearest neighbors
-        nearest_neighbors = annoy_index.get_nns_by_vector(query_embedding, 5, include_distances=True)
+        nearest_neighbors = annoy_index.get_nns_by_vector(query_embedding, 6, include_distances=True)
 
         results = []
         for neighbor_id, distance in zip(nearest_neighbors[0], nearest_neighbors[1]):
@@ -87,6 +87,7 @@ def nearest_neighbours(query_image_path):
                 'neighbor_id': neighbor_id,
                 'distance': round(distance, 2),
                 'asin': metadata.get('asin'),
+                'imgUrl': metadata.get('imgUrl'),
                 'title': metadata.get('title'),
                 'productURL': metadata.get('productURL'),
                 'stars': metadata.get('stars'),
@@ -120,12 +121,15 @@ def search_view(request):
 
             # Return results as JSON for debugging (can be adapted for rendering)
             if nearest_neighbors_results:
-                return render(request, 'image_search/results.html', {'form': form})
+                return render(request, 'image_search/results.html', {'results': nearest_neighbors_results})
             else:
-                return JsonResponse({'error': 'Error processing image or finding results'}, status=500)
+                # If no results, show an error page or pass an error message
+                return render(request, 'image_search/results.html', {'error': 'No matching products found.'})
 
     else:
         form = ImageUploadForm()
+
+    return render(request, 'image_search/search.html', {'form': form})
 
 
 # views.py

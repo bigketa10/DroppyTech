@@ -9,11 +9,10 @@
             {% for result in results %}
                 <div class="col-md-4">
                     <div class="card mb-4 shadow-sm">
-                        <img src="{{ result.productURL }}" class="card-img-top" alt="Product Image">
+                        <img src="{{ result.imgUrl }}" class="card-img-top" alt="Product Image">
                         <div class="card-body">
                             <h5 class="card-title">{{ result.title }}</h5>
                             <p class="card-text">
-                                <strong>Product Name:</strong> {{ result.title }}<br>
                                 <strong>URL:</strong> {{ result.productURL }}<br>
                                 <strong>Category:</strong> {{ result.categoryName }}<br>
                                 <strong>Stars:</strong> {{ result.stars }}<br>
