@@ -11,12 +11,26 @@
                         <h3 class="card-title text-center">Upload an Image</h3>
                     </div>
                     <div class="card-body">
-                        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <form id="uploadForm" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
                             {% csrf_token %}
                             <div class="mb-3">
-                                {{ form.as_p }}
+                                <div id="dropZone" class="border border-primary rounded text-center p-4 position-relative" style="height: 200px;">
+                                    <p id="dropZoneText" class="text-muted position-absolute top-50 start-50 translate-middle">Drag and drop an image here, or click to select one.</p>
+                                    <input 
+                                        type="file" 
+                                        id="fileInput" 
+                                        name="image" 
+                                        class="form-control d-none" 
+                                        accept="image/*" 
+                                        required>
+                                    <img id="previewImage" class="img-fluid d-none position-absolute top-50 start-50 translate-middle" style="max-height: 150px;" alt="Image Preview">
+                                </div>
                             </div>
-                            <div class="d-grid">
+                            <div id="fileInfo" class="mt-3 d-none">
+                                <p><strong>File Name:</strong> <span id="fileName"></span></p>
+                                <p><strong>File Size:</strong> <span id="fileSize"></span></p>
+                            </div>
+                            <div class="d-grid mt-3">
                                 <button type="submit" class="btn btn-primary">Upload Image</button>
                             </div>
                         </form>
@@ -30,4 +44,67 @@
             </div>
         </div>
     </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const previewImage = document.getElementById('previewImage');
+        const dropZoneText = document.getElementById('dropZoneText');
+
+        // Highlight drop zone when dragging files over it
+        dropZone.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropZone.classList.add('bg-light');
+        });
+
+        // Remove highlight when drag leaves drop zone
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('bg-light');
+        });
+
+        // Handle dropped files
+        dropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropZone.classList.remove('bg-light');
+            const files = event.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files; // Assign files to input
+                displayFileInfo(files[0]);
+            }
+        });
+
+        // Trigger file input click on drop zone click
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Handle file input change
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                displayFileInfo(fileInput.files[0]);
+            }
+        });
+
+        // Display file information and preview
+        function displayFileInfo(file) {
+            if (!file) return;
+
+            // Update file info
+            fileName.textContent = file.name;
+            fileSize.textContent = `${(file.size / 1024).toFixed(2)} KB`;
+            fileInfo.classList.remove('d-none');
+
+            // Display image preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewImage.classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
+
+            // Keep the drop zone text visible
+            dropZoneText.style.opacity = 0.5; // Fade text for emphasis
+        }
+    </script>
 {% endblock %}

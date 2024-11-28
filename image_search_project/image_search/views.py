@@ -12,6 +12,40 @@ from torchvision import models, transforms
 import requests
 from io import BytesIO
 
+import requests
+from bs4 import BeautifulSoup
+
+def get_amazon_product_details(url):
+    try:
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/83.0.4103.116 Safari/537.36"
+            )
+        }
+
+        # Send the request to the URL
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raise an error if the request fails
+
+        # Parse the page content
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # Extract product details
+        currency = soup.find(class_="a-price-symbol").get_text().strip()
+        price = (
+            soup.find(class_="a-price-whole").get_text().strip() +
+            soup.find(class_="a-price-fraction").get_text().strip()
+        )
+        image_url = soup.find(id="landingImage")["src"]
+        name = soup.find(id="productTitle").get_text().strip()
+        return currency + price
+
+    except Exception as e:
+        print(f"Error fetching product details: {e}")
+        return "Unavailable"
+
 # Compute the Hamming distance between two hashes
 def compute_hamming_distance(hash1, hash2):
     return bin(int(hash1, 16) ^ int(hash2, 16)).count('1')
@@ -87,6 +121,7 @@ def nearest_neighbours(query_image_path):
                 'neighbor_id': neighbor_id,
                 'distance': round(distance, 2),
                 'asin': metadata.get('asin'),
+                'price': get_amazon_product_details(metadata.get('productURL')),
                 'imgUrl': metadata.get('imgUrl'),
                 'title': metadata.get('title'),
                 'productURL': metadata.get('productURL'),
@@ -145,3 +180,6 @@ def home_view(request):
 
 def search(request):
     return render(request, 'image_search/search.html')
+
+def login(request):
+    return render(request, 'image_search/login.html')
