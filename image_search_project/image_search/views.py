@@ -81,12 +81,12 @@ from annoy import AnnoyIndex
 
 def nearest_neighbours(query_image_path):
     # Load Annoy index
-    annoy_index_path = os.path.join(settings.MEDIA_ROOT, "product_index.ann")
+    annoy_index_path = os.path.join(settings.MEDIA_ROOT, "product_index (2).ann")
     annoy_index = AnnoyIndex(512, 'angular')
     annoy_index.load(annoy_index_path)
 
     # Load metadata mapping
-    metadata_path = os.path.join(settings.MEDIA_ROOT, 'id_to_metadata (2).json')
+    metadata_path = os.path.join(settings.MEDIA_ROOT, 'id_to_metadata.json')
     with open(metadata_path, 'r') as f:
         id_to_metadata = json.load(f)
 
