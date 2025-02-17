@@ -4,13 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
+    # Marks this as the initial migration for the app
     initial = True
-
+    # Specifies dependencies (none in this case, since it's an initial migration)
     dependencies = [
     ]
-
+    # Defines the operations that will be applied to the database
     operations = [
+        # Creates a new database model called 'Product'
         migrations.CreateModel(
             name='Product',
             fields=[

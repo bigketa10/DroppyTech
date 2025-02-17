@@ -1,7 +1,5 @@
 {% extends 'image_search/base.html' %}
-
 {% block title %}Search Results{% endblock %}
-
 {% block content %}
     <div class="container mt-5">
         <h2>Nearest Neighbor Results</h2>
@@ -9,12 +7,12 @@
             {% for result in results %}
                 <div class="col-md-4">
                     <div class="card mb-4 shadow-sm">
-                        <img src="{{ result.imgUrl }}" class="card-img-top" alt="Product Image">
+                        <a href="{{ result.productURL }}"><img src="{{ result.imgUrl }}" class="card-img-top" alt="Product Image"></a>
                         <div class="card-body">
                             <h5 class="card-title">{{ result.title }}</h5>
                             <p class="card-text">
                                 <strong>Price:</strong> {{ result.price }}<br>
-                                <strong>URL:</strong> {{ result.productURL }}<br>
+                                <strong>URL: <a href="{{ result.productURL }}">{{ result.productURL }}</a></strong><br>
                                 <strong>Category:</strong> {{ result.categoryName }}<br>
                                 <strong>Stars:</strong> {{ result.stars }}<br>
                                 <strong>Reviews:</strong> {{ result.reviews }}<br>

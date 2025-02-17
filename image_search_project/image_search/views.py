@@ -15,8 +15,12 @@ from io import BytesIO
 import requests
 from bs4 import BeautifulSoup
 
+import requests
+from bs4 import BeautifulSoup
+
 def get_amazon_product_details(url):
     try:
+        # Headers to mimic a real user and reduce chances of being blocked by Amazon
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) "
@@ -25,26 +29,43 @@ def get_amazon_product_details(url):
             )
         }
 
-        # Send the request to the URL
+        # Send request to the URL
         response = requests.get(url, headers=headers)
-        response.raise_for_status()  # Raise an error if the request fails
+        response.raise_for_status() # Raises an error if the request fails (e.g., 404 or 500)
 
-        # Parse the page content
+        # Parse the HTML content of the response using BeautifulSoup
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # Extract product details
-        currency = soup.find(class_="a-price-symbol").get_text().strip()
-        price = (
-            soup.find(class_="a-price-whole").get_text().strip() +
-            soup.find(class_="a-price-fraction").get_text().strip()
-        )
-        image_url = soup.find(id="landingImage")["src"]
-        name = soup.find(id="productTitle").get_text().strip()
-        return currency + price
+        # Extract product details safely
+        currency_element = soup.find(class_="a-price-symbol")
+        price_whole_element = soup.find(class_="a-price-whole")
+        price_fraction_element = soup.find(class_="a-price-fraction")
+        image_element = soup.find(id="landingImage")
+        name_element = soup.find(id="productTitle")
 
+        # Assign values only if elements exist to prevent AttributeError
+        currency = currency_element.get_text().strip() if currency_element else ""
+        price_whole = price_whole_element.get_text().strip() if price_whole_element else "0"
+        price_fraction = price_fraction_element.get_text().strip() if price_fraction_element else "00"
+        price = f"{currency}{price_whole}.{price_fraction}"
+
+        image_url = image_element["src"] if image_element else "No image found"
+        name = name_element.get_text().strip() if name_element else "No name found"
+
+        return {
+            "name": name,
+            "price": price,
+            "image_url": image_url
+        }
+    
+    # Handle exceptions
+    except requests.exceptions.RequestException as e:
+        print(f"Network error: {e}")
+        return {"error": "Network error or blocked request"}
     except Exception as e:
         print(f"Error fetching product details: {e}")
-        return "Unavailable"
+        return {"error": "Parsing error or missing product details"}
+
 
 # Compute the Hamming distance between two hashes
 def compute_hamming_distance(hash1, hash2):
@@ -115,13 +136,14 @@ def nearest_neighbours(query_image_path):
         nearest_neighbors = annoy_index.get_nns_by_vector(query_embedding, 6, include_distances=True)
 
         results = []
+        
         for neighbor_id, distance in zip(nearest_neighbors[0], nearest_neighbors[1]):
             metadata = id_to_metadata.get(str(neighbor_id), {})
             results.append({
                 'neighbor_id': neighbor_id,
                 'distance': round(distance, 2),
                 'asin': metadata.get('asin'),
-                'price': get_amazon_product_details(metadata.get('productURL')),
+                'price': metadata.get('price'),
                 'imgUrl': metadata.get('imgUrl'),
                 'title': metadata.get('title'),
                 'productURL': metadata.get('productURL'),
@@ -133,41 +155,96 @@ def nearest_neighbours(query_image_path):
             })
         return results
 
+    # Log error details for debugging
     except Exception as e:
-        # Log error details for debugging
         print(f"Error in nearest_neighbours: {e}")
         return None
+    
+def link_convert(url):
+    try:
+        # Headers to mimic a real user and reduce chances of being blocked by Amazon
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/83.0.4103.116 Safari/537.36"
+            )
+        }
+
+        # Send the request to the URL
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raise an error if the request fails
+
+        # Parse the page content
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # Extract product details
+        image_url = soup.find(id="landingImage")["src"]
+        return image_url
+    
+    # Log error details for debugging
+    except Exception as e:
+        print(f"Error fetching product details: {e}")
+        return "Unavailable"
 
 
 def search_view(request):
     if request.method == 'POST':
-        form = ImageUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            uploaded_image = form.cleaned_data['image']
+        image_url = request.POST.get('image_url')  # URL input
+        uploaded_image = request.FILES.get('image')  # File input
+        temp = image_url
+        if image_url:
+            try:
+                try:
+                    # Convert the URL to image URL if it's an Amazon product URL
+                    image_url = link_convert(image_url)
+                    response = requests.get(image_url, stream=True)
+                    print(f"Testing:{image_url}")
+                    if response.status_code == 200:
+                        temp_image_path = os.path.join(settings.MEDIA_ROOT, 'temp_image.jpg')
+                        with open(temp_image_path, 'wb+') as f:
+                            for chunk in response.iter_content(1024):
+                                f.write(chunk)
+                    results = nearest_neighbours(temp_image_path)
+                    print(results)
+                    if results == None:
+                        return render(request, 'image_search/search.html', {'error': "Error fetching image."})
+                    return render(request, 'image_search/results.html', {'results': results})
+
+                except:
+                    # Converts it back into the original URL if it was already an image URL
+                    image_url = temp
+                    response = requests.get(image_url, stream=True)
+                    print(f"Testing:{image_url}")
+                    if response.status_code == 200:
+                        temp_image_path = os.path.join(settings.MEDIA_ROOT, 'temp_image.jpg')
+                        with open(temp_image_path, 'wb+') as f:
+                            for chunk in response.iter_content(1024):
+                                f.write(chunk)
+                    results = nearest_neighbours(temp_image_path)
+                    if results == None:
+                        return render(request, 'image_search/search.html', {'error': "Error fetching image."})
+                    return render(request, 'image_search/results.html', {'results': results})
+
+            except Exception as e:
+                return render(request, 'image_search/search.html', {'error': f"Error fetching image: {e}"})
+
+        elif uploaded_image:
             temp_image_path = os.path.join(settings.MEDIA_ROOT, 'temp_image.jpg')
-
-            # Save the uploaded image temporarily
-            with open(temp_image_path, 'wb+') as destination:
+            with open(temp_image_path, 'wb+') as f:
                 for chunk in uploaded_image.chunks():
-                    destination.write(chunk)
+                    f.write(chunk)
 
-            # Perform nearest neighbor search
-            nearest_neighbors_results = nearest_neighbours(temp_image_path)
+            results = nearest_neighbours(temp_image_path)
+            if results == None:
+                return render(request, 'image_search/search.html', {'error': "Error fetching image."})
+            return render(request, 'image_search/results.html', {'results': results})
 
-            # Return results as JSON for debugging (can be adapted for rendering)
-            if nearest_neighbors_results:
-                return render(request, 'image_search/results.html', {'results': nearest_neighbors_results})
-            else:
-                # If no results, show an error page or pass an error message
-                return render(request, 'image_search/results.html', {'error': 'No matching products found.'})
+        # If neither input is provided
+        return render(request, 'image_search/search.html', {'error': "Please provide an image or image URL."})
 
-    else:
-        form = ImageUploadForm()
+    return render(request, 'image_search/search.html')
 
-    return render(request, 'image_search/search.html', {'form': form})
-
-
-# views.py
 from django.conf import settings
 from django.shortcuts import render
 

@@ -8,12 +8,14 @@
             <div class="col-md-6">
                 <div class="card shadow-sm">
                     <div class="card-header bg-primary text-white">
-                        <h3 class="card-title text-center">Upload an Image</h3>
+                        <h3 class="card-title text-center">Add your image or enter an image URL</h3>
                     </div>
                     <div class="card-body">
-                        <form id="uploadForm" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <form id="imageForm" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
                             {% csrf_token %}
+                            <!-- File Upload Section -->
                             <div class="mb-3">
+                                <label class="form-label">Upload an image:</label>
                                 <div id="dropZone" class="border border-primary rounded text-center p-4 position-relative" style="height: 200px;">
                                     <p id="dropZoneText" class="text-muted position-absolute top-50 start-50 translate-middle">Drag and drop an image here, or click to select one.</p>
                                     <input 
@@ -21,8 +23,7 @@
                                         id="fileInput" 
                                         name="image" 
                                         class="form-control d-none" 
-                                        accept="image/*" 
-                                        required>
+                                        accept="image/*">
                                     <img id="previewImage" class="img-fluid d-none position-absolute top-50 start-50 translate-middle" style="max-height: 150px;" alt="Image Preview">
                                 </div>
                             </div>
@@ -30,10 +31,32 @@
                                 <p><strong>File Name:</strong> <span id="fileName"></span></p>
                                 <p><strong>File Size:</strong> <span id="fileSize"></span></p>
                             </div>
+
+                            <!-- OR Separator -->
+                            <div class="text-center my-3">
+                                <p>OR</p>
+                            </div>
+
+                            <!-- URL Input Section -->
+                            <div class="mb-3">
+                                <label for="urlInput" class="form-label">Enter the URL of an image:</label>
+                                <input 
+                                    type="url" 
+                                    id="urlInput" 
+                                    name="image_url" 
+                                    class="form-control" 
+                                    placeholder="https://example.com/image.jpg" 
+                                    pattern="https?://.*" 
+                                    title="Please enter a valid URL">
+                            </div>
+
+                            <!-- Submit Button -->
                             <div class="d-grid mt-3">
-                                <button type="submit" class="btn btn-primary">Upload Image</button>
+                                <button type="submit" class="btn btn-primary">Submit</button>
                             </div>
                         </form>
+
+                        <!-- Error Messages -->
                         {% if error %}
                             <div class="alert alert-danger mt-3" role="alert">
                                 {{ error }}
