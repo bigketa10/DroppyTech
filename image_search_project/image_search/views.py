@@ -196,7 +196,7 @@ def search_view(request):
         if image_url:
             try:
                 try:
-                    # Convert the URL to image URL if it's an Amazon product URL
+                    # Convert the URL to image URL it's an Amazon product URL
                     image_url = link_convert(image_url)
                     response = requests.get(image_url, stream=True)
                     print(f"Testing:{image_url}")
@@ -207,8 +207,8 @@ def search_view(request):
                                 f.write(chunk)
                     results = nearest_neighbours(temp_image_path)
                     print(results)
-                    if results == None:
-                        return render(request, 'image_search/search.html', {'error': "Error fetching image."})
+                    # if results == None:
+                    #     return render(request, 'image_search/search.html', {'error': "Error fetching image."})
                     return render(request, 'image_search/results.html', {'results': results})
 
                 except:
@@ -222,8 +222,8 @@ def search_view(request):
                             for chunk in response.iter_content(1024):
                                 f.write(chunk)
                     results = nearest_neighbours(temp_image_path)
-                    if results == None:
-                        return render(request, 'image_search/search.html', {'error': "Error fetching image."})
+                    # if results == None:
+                    #     return render(request, 'image_search/search.html', {'error': "Error fetching image."})
                     return render(request, 'image_search/results.html', {'results': results})
 
             except Exception as e:
@@ -236,8 +236,8 @@ def search_view(request):
                     f.write(chunk)
 
             results = nearest_neighbours(temp_image_path)
-            if results == None:
-                return render(request, 'image_search/search.html', {'error': "Error fetching image."})
+            # if results == None:
+            #     return render(request, 'image_search/search.html', {'error': "Error fetching image."})
             return render(request, 'image_search/results.html', {'results': results})
 
         # If neither input is provided
