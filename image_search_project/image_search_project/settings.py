@@ -138,11 +138,3 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
     
 )
-
-from django.conf import settings
-
-def some_view(request):
-    return render(request, 'template_name.html', {
-        'results': results,
-        'MEDIA_URL': settings.MEDIA_URL,  # Pass MEDIA_URL to the template
-    })

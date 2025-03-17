@@ -7,7 +7,9 @@
             {% for result in results %}
                 <div class="col-md-4">
                     <div class="card mb-4 shadow-sm">
-                        <a href="{{ result.productURL }}"><img src="{{ result.imgUrl }}" class="card-img-top" alt="Product Image"></a>
+                        <a href="{{ result.productURL }}">
+                            <img src="{{ result.imgUrl }}" class="card-img-top img-fluid" alt="Product Image" style="height: 200px; width: 100%; object-fit: contain; background-color: #f8f9fa;">
+                        </a>                        
                         <div class="card-body">
                             <h5 class="card-title">{{ result.title }}</h5>
                             <p class="card-text">
@@ -17,7 +19,8 @@
                                 <strong>Stars:</strong> {{ result.stars }}<br>
                                 <strong>Reviews:</strong> {{ result.reviews }}<br>
                                 <strong>Bestseller:</strong> {{ result.isBestSeller }}<br>
-                                <strong>Distance:</strong> {{ result.distance }}
+                                <strong>Distance:</strong> {{ result.distance }}<br>
+                                <strong>Dispatched by:</strong> {{ result.dispatchFrom }}
                             </p>
                         </div>
                     </div>

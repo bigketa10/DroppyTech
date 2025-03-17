@@ -1,3 +1,8 @@
-from django.test import TestCase
+from PIL import Image, ImageChops
+img1, img2 = Image.open('image1.jpg'), Image.open('image2.jpg')
+diff = ImageChops.difference(img1, img2)
 
-# Create your tests here.
+if diff.getbbox():
+    diff.show()
+else:
+    print('Images are identical')

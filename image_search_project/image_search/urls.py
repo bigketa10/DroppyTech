@@ -2,6 +2,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    
+    path('search/<path:url>/', views.url_search, name='url_search'),
+
     # Route for the search page
     path('search/', views.search_view, name='search'),
 
@@ -10,7 +13,4 @@ urlpatterns = [
 
     # Home page route
     path('', views.home_view, name='home'),
-
-    # Login page route
-    path('login/', views.login, name='login'),
 ]
