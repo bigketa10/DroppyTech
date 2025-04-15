@@ -1,31 +1,29 @@
+# Description: This file contains the views for the image_search app.
+# The views are responsible for handling the requests and responses from the user.
+
+# Import the required libraries
 import os
 import json
-import requests
+import urllib.parse
 from io import BytesIO
+import requests
 from bs4 import BeautifulSoup
 from PIL import Image
 import imagehash
 from annoy import AnnoyIndex
+
+# Import the required PyTorch libraries
 import torch.nn as nn
 from torchvision import models, transforms
 
+# Import the required Django libraries
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import JsonResponse
 
+# Import the ImageUploadForm from the forms.py file
 from .forms import ImageUploadForm
-
-# from cairosvg import svg2png
-# os.environ['path'] += r';C:\Users\bisha\AppData\Local\Programs\Python\Python312\cairo\dlls'
-# def convert_from_svg_to_jpg(image):
-#     temp_jpg_path = os.path.join(settings.MEDIA_ROOT, 'temp_image.jpg')
-#     temp_png_path = temp_jpg_path.replace('temp_image.jpg', 'temp_image.png')
-#     svg2png(bytestring=image,write_to=temp_png_path)
-#     #open image in png format 
-#     img_png = Image.open(temp_png_path) 
-#     #The image object is used to save the image in jpg format
-#     img_png.save(temp_jpg_path)
 
 def get_amazon_product_details(url):
     try:
@@ -57,14 +55,19 @@ def get_amazon_product_details(url):
         price_whole = price_whole_element.get_text().strip() if price_whole_element else '0'
         price_fraction = price_fraction_element.get_text().strip() if price_fraction_element else '00'
         
+        # Format the price by combining the currency, whole and fraction parts
         price = f'{currency}{price_whole}.{price_fraction}'
+        # Extract the image URL and product name
         image_url = image_element['src'] if image_element else 'No image found'
+        # Extract the product name
         name = name_element.get_text().strip() if name_element else 'No name found'
 
+        # Print the extracted details for debugging
         print ('Price: ', price)
         print ('Image URL: ', image_url)   
         print ('Name: ', name)
 
+        # Return the extracted details as a dictionary
         return {
             'name': name,
             'price': price,
@@ -167,10 +170,11 @@ def nearest_neighbors(query_image_path):
         query_embedding = model(input_tensor).squeeze(0).detach().numpy()
 
         # Find the top 5 nearest neighbors
-        nearest_neighbors = annoy_index.get_nns_by_vector(query_embedding, 32, include_distances=True)
+        nearest_neighbors = annoy_index.get_nns_by_vector(query_embedding, 6, include_distances=True)
 
         results = []
         
+        # Extract metadata for each neighbor
         for neighbor_id, distance in zip(nearest_neighbors[0], nearest_neighbors[1]):
             metadata = id_to_metadata.get(str(neighbor_id), {})
             results.append({
@@ -223,7 +227,9 @@ def link_convert(url):
         return 'Unavailable'
 
 def search_view(request):
+    # Handle POST request
     if request.method == 'POST':
+        # Get the image URL or uploaded image
         image_url = request.POST.get('image_url')  # URL input
         image_url= image_url.strip()
         uploaded_image = request.FILES.get('image')  # File input
@@ -236,17 +242,17 @@ def search_view(request):
                     image_url= image_url.strip()
                     response = requests.get(image_url, stream=True)
                     print(f'Testing:{image_url}')
-
+                    # If the image URL is valid
                     if response.status_code == 200:
                         temp_image_path = os.path.join(settings.MEDIA_ROOT, 'temp_image.jpg')
                         with open(temp_image_path, 'wb+') as f:
-
+                            # Save the image to a temporary file
                             for chunk in response.iter_content(1024):
                                 f.write(chunk)
                     results = nearest_neighbors(temp_image_path)
                     print(results)
                     if results == None:
-                        return render(request, 'image_search/search.html', {'error': 'Error fetching image.'})
+                        return render(request, 'image_search/search.html', {'error': 'Invalid URL inputted'})
                     request.session['search_results'] = results
                     return redirect(reverse('results'))
 
@@ -255,22 +261,22 @@ def search_view(request):
                     image_url = temp
                     response = requests.get(image_url, stream=True)
                     print(f'Testing:{image_url}')
-
+                    # If the image URL is valid
                     if response.status_code == 200:
                         temp_image_path = os.path.join(settings.MEDIA_ROOT, 'temp_image.jpg')
                         with open(temp_image_path, 'wb+') as f:
                             for chunk in response.iter_content(1024):
-
+                                # Save the image to a temporary file
                                 f.write(chunk)
                     results = nearest_neighbors(temp_image_path)
                     if results == None:
-                        return render(request, 'image_search/search.html', {'error': 'Error fetching image.'})
+                        return render(request, 'image_search/search.html', {'error': 'Invalid URL inputted'})
                     request.session['search_results'] = results
                     return redirect(reverse('results'))
 
             except Exception as e:
-                return render(request, 'image_search/search.html', {'error': f'Error fetching image: {e}'})
-
+                return render(request, 'image_search/search.html', {'error': f'Invalid URL inputted'})
+        # If an image is uploaded
         elif uploaded_image:
             temp_image_path = os.path.join(settings.MEDIA_ROOT, 'temp_image.jpg')
             with open(temp_image_path, 'wb+') as f:
@@ -280,18 +286,16 @@ def search_view(request):
 
             results = nearest_neighbors(temp_image_path)
             if results == None:
-                return render(request, 'image_search/search.html', {'error': 'Error fetching image.'})
+                return render(request, 'image_search/search.html', {'error': 'Please provide a suitable image (it is either corrupted or not in an accepted format).'})
             request.session['search_results'] = results
             return redirect(reverse('results'))
 
-        # If neither input is provided
-        return render(request, 'image_search/search.html', {'error': 'Please provide an image or image URL.'})
+        # If no input is provided
+        return render(request, 'image_search/search.html', {'error': 'Please provide a URL or upload an image.'})
 
     return render(request, 'image_search/search.html')
 
-from django.http import JsonResponse
-import urllib.parse
-
+# Allows the user to search for an image by typing in 'droppy.com/search/' followed by the URL of the image or Amazon Product URL
 def url_search(request, url):
     decoded_url = urllib.parse.unquote(url) # Decode the URL
     image_url = url  # URL input
@@ -306,6 +310,7 @@ def url_search(request, url):
                 response = requests.get(image_url, stream=True)
                 print(f'Testing:{image_url}')
 
+                # If the image URL is valid
                 if response.status_code == 200:
                     temp_image_path = os.path.join(settings.MEDIA_ROOT, 'temp_image.jpg')
                     with open(temp_image_path, 'wb+') as f:
@@ -314,8 +319,9 @@ def url_search(request, url):
                             f.write(chunk)
                 results = nearest_neighbors(temp_image_path)
                 print(results)
+                # If the results are not valid
                 if results == None:
-                    return render(request, 'image_search/search.html', {'error': 'Error fetching image.'})
+                    return render(request, 'image_search/search.html', {'error': 'Invalid URL inputted, please try again'})
                 request.session['search_results'] = results
                 return redirect(reverse('results'))
 
@@ -333,24 +339,60 @@ def url_search(request, url):
                             f.write(chunk)
                 results = nearest_neighbors(temp_image_path)
                 if results == None:
-                    return render(request, 'image_search/search.html', {'error': 'Error fetching image.'})
+                    return render(request, 'image_search/search.html', {'error': 'Invalid URL inputted, please try again'})
                 request.session['search_results'] = results
                 return redirect(reverse('results'))
-
+        # If an error occurs
         except Exception as e:
-            return render(request, 'image_search/search.html', {'error': f'Error fetching image: {e}'})
+            return render(request, 'image_search/search.html', {'error': f'Invalid URL inputted, please try again'})
     return render(request, 'image_search/search.html')
 
+# Convert the value 0 to 'N/A'
 def convert_from_zero(value):
     if value == 0:
         return 'N/A'
     return value
+
+# Returns the results page to the user
 def results_view(request):
     results = request.session.get('search_results', [])
     return render(request, 'image_search/results.html', {'results': results})
 
+# Returns the home page to the user
 def home_view(request):
     return render(request, 'image_search/home.html')
 
+# Returns the search page to the user
 def search(request):
     return render(request, 'image_search/search.html')
+
+from django.shortcuts import render, redirect 
+from django.contrib import messages
+from django.views import View
+
+from .forms import RegisterForm
+
+
+# Sign up page for the user to create an account
+# This page will be used to create an account for the user
+class RegisterView(View):
+    form_class = RegisterForm
+    initial = {'key': 'value'}
+    template_name = 'users/register.html'
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class(initial=self.initial)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+            username = form.cleaned_data.get('username')
+            messages.success(request, f'Account created for {username}')
+
+            return redirect(to='/')
+
+        return render(request, self.template_name, {'form': form})

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import RegisterView
 
 urlpatterns = [
     
@@ -13,4 +14,8 @@ urlpatterns = [
 
     # Home page route
     path('', views.home_view, name='home'),
-]
+    
+    # Route for the registration page
+    path('register/', RegisterView.as_view(), name='users-register'),
+    
+    ]
