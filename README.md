@@ -1,5 +1,4 @@
 # Droppy: Dropshipping Detection Web App
-**Author:** Bishal Shrestha
 
 ---
 
